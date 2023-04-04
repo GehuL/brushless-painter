@@ -2,7 +2,7 @@
 
 Dessinez dans votre navigateur web en utilisant l'index de la main à l'aide de votre caméra.
 La détection se fait grâce à l'API Javascript de Mediapipe pour la détection de mains, qui utilise des algorithmes 
-d'apprentissage automatique. Le modèle utilisé est-celui fourni par Mediapipe, qui a été entrainé sur plus de 30k images.
+d'apprentissage automatique. Le modèle utilisé est celui fourni par Mediapipe, qui a été entrainé sur plus de 30k images.
 
 ## Contexte
 
@@ -10,7 +10,7 @@ Ce projet est réalisé par deux étudiants à l'université de Bourgogne, en tr
 
 ## Démo
 
-![demo](https://user-images.githubusercontent.com/110404104/229885806-1e8c2033-2181-426f-b21f-d6ca0a726c94.png)
+![demo](https://user-images.githubusercontent.com/110404104/229896766-30cfb4c3-0fe8-4eb6-901f-79d10e8edfd7.png)
 
 # Version
 
@@ -19,10 +19,10 @@ Nous considérons que la version 1.0 correspond à l'état du projet cloturé pa
 # Fonctionnalités
 
 A ce jour, les fonctionnalités disponibles sont:
-    - Dessiner avec l'index à l'écran. L'épaisseur du trait est proportionnlle à l'inclinaison de la main.
-    - Sélection de couleur dans une palette.
-    - Gommé / Effacer l'écran.
-    - Click avec l'index.
+ - Dessiner avec l'index à l'écran. L'épaisseur du trait est proportionnelle à l'inclinaison de la main.
+ - Sélection de couleur dans une palette.
+ - Gommé / Effacer l'écran.
+ - Click avec l'index.
 
 # Télécharger le projet
 
@@ -35,7 +35,7 @@ git clone https://github.com/GehuL/brushless-painter.git
 
 ## Avec CDN (simple)
 
-La version avec CDN (content delivery network) charge les scripts de médiapipe et tout le nécessaire depuis leur serveurs.
+La version avec CDN (content delivery network) charge les scripts de médiapipe et tout le nécessaire depuis leurs serveurs.
 Il est donc nécessaire d'avoir une connexion internet pour faire fonctionner la détection de main.
 
 ## Sans CDN
@@ -53,7 +53,7 @@ npm i @mediapipe/hands
 
 ## Executer
 
-Pour pouvoir exécuter le programme dans le navigateur, il est impératif de lancer un serveur car des erreurs qui bloque le chargement de script peuvent apparaître.
+Pour pouvoir exécuter le programme dans le navigateur, il est impératif de lancer un serveur car des erreurs qui bloquent le chargement de script peuvent apparaître.
 
 Tout d'abord, installez la version 3 de [python](https://www.python.org/downloads/).
 Ensuite, tapez les commandes suivantes:
@@ -81,9 +81,9 @@ Les navigateurs et systèmes d'exploitation testés sont les suivants:
 
 <br> Légende: </br> 
 
-X : Ne fonctionne pas
-V : Fonctionne
-? : Non tester
+ - X : Ne fonctionne pas
+ - V : Fonctionne
+ - ? : Non tester
 
 # A-venir
 
