@@ -73,11 +73,11 @@ La compatibilité repose essentiellement sur les systèmes et navigateur support
 
 Les navigateurs et systèmes d'exploitation testés sont les suivants:
 
-|         OS          |     Chrome      |     Safari     |    Firefox    | 
-| ------------------  | --------------  | -------------  | ------------- |
-| MacOS (High Sierra) |       V         |       X        |      ?        |
-| Windows NT (10/11)  |       V         |       ?        |      ?        |
-| Raspberry PI        |       ?         |       ?        |      X        | 
+|         OS          |     Chrome      |     Safari     |    Firefox    |  Edge |
+| ------------------  | --------------  | -------------  | ------------- | ----- |
+| MacOS (High Sierra) |       V         |       X        |      ?        |       |
+| Windows NT (10/11)  |       V         |       ?        |      ?        |   V   |
+| Raspberry PI        |       ?         |       ?        |      X        |       |
 
 <br> Légende: </br> 
 
