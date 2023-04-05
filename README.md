@@ -21,7 +21,7 @@ Nous considérons que la version 1.0 correspond à l'état du projet cloturé pa
 A ce jour, les fonctionnalités disponibles sont:
  - Dessiner avec l'index à l'écran. L'épaisseur du trait est proportionnelle à l'inclinaison de la main.
  - Sélection de couleur dans une palette.
- - Gommé / Effacer l'écran.
+ - Gommer / Effacer l'écran.
  - Click avec l'index.
 
 # Télécharger le projet
@@ -75,7 +75,7 @@ Les navigateurs et systèmes d'exploitation testés sont les suivants:
 
 |         OS          |     Chrome      |     Safari     |    Firefox    | 
 | ------------------  | --------------  | -------------  | ------------- |
-| MacOS (High Sierra) |       X         |       X        |      ?        |
+| MacOS (High Sierra) |       V         |       X        |      ?        |
 | Windows NT (10/11)  |       V         |       ?        |      ?        |
 | Raspberry PI        |       ?         |       ?        |      X        | 
 
