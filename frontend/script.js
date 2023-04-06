@@ -13,43 +13,49 @@ let gFirstDetect = false;
 let gEraseMode = false;
 let gFingerDown = false;
 
-// Moyenne glissante angle index
-let gAngleValues = Array(10);
-let gAngleIndex = 0;
+let gTrackPoints = [5, 6, 0];
+let gDatasPoints = {};
+
+// Angle index
+let gLastAngle = 0;
+let gAngleSpeed = 0;
 
 // Lissage du dessin
 let gLastPos = {'x': 0, 'y': 0, 'z': 0};
 let gAvPos = {'x': 0, 'y': 0, 'z': 0};
 let gMoyIndex = 0;
-let gPosArray = Array(15);
+let gPosArray = Array(10);
 
 let gJoints = [[5, 6, 0]];
+let gTimeStart = 0;
+
+let gIsDetect = false;
 
 function updateAveragePos(x, y, z)
 {
   gPosArray[gMoyIndex] = {'x': x, 'y': y, 'z': z};
   gMoyIndex = gMoyIndex + 1;
   
-  if(gMoyIndex >= gPosArray.length - 1)
+  if(gMoyIndex > gPosArray.length - 1)
     gMoyIndex = 0;
 }
 
-function getAveragePos()
+function getAveragePos(array)
 {
   let sum_x = 0;
   let sum_y = 0;
   let sum_z = 0;
 
-  for(let i = 0; i < gPosArray.length; i++)
+  for(let i = 0; i < array.length; i++)
   {
-    sum_x += gPosArray[i].x;
-    sum_y += gPosArray[i].y;
-    sum_z += gPosArray[i].z;
+    sum_x += array[i].x;
+    sum_y += array[i].y;
+    sum_z += array[i].z;
   }
 
-  let x = sum_x / gPosArray.length;
-  let y = sum_y / gPosArray.length;
-  let z = sum_z / gPosArray.length;
+  let x = sum_x / array.length;
+  let y = sum_y / array.length;
+  let z = sum_z / array.length;
 
   return {'x': x, 'y': y, 'z': z};
 }
@@ -92,12 +98,72 @@ function angle_joints(joints_list, landmarks)
   return angles;
 }
 
+function processResults(results)
+{
+  // Acquisition des mesures
+  if((results.multiHandLandmarks[0]?.length) === 21 && (results.multiHandWorldLandmarks[0]?.length === 21))
+  {
+    let filtered3DHand = Object.assign({}, results.multiHandWorldLandmarks[0]);
+
+    const index_finger_pos = results.multiHandLandmarks[0][8];
+
+    let rect = canvasPainting.getBoundingClientRect();
+    
+    let pos_x = (1.0 - index_finger_pos.x) * canvasPainting.width - rect.x;
+    let pos_y = index_finger_pos.y * canvasPainting.height - rect.y;
+    let pos_z = Math.abs(index_finger_pos.z) * canvasPainting.width * 0.2;
+
+    if(gFirstDetect)
+    {
+      gPosArray.fill({'x': pos_x, 'y': pos_y, 'z': pos_z});
+      gFirstDetect = false;
+    }
+
+    // Stoque les positions des points tracké
+    for(points of gTrackPoints)
+    {
+      let datas = gDatasPoints[points];
+
+      if(datas == null)
+        datas = {'datas': Array(5).fill({'x':0, 'y':0, 'z': 0}), 'index': 0};
+
+      const pos = results.multiHandWorldLandmarks[0][points];
+
+      datas.datas[datas.index] = {'x': pos.x * 100, 'y': pos.y * 100, 'z': pos.z * 100};
+      datas.index = (datas.index + 1) % (datas.datas.length - 1);
+      
+      gDatasPoints[points] = datas;
+    
+      filtered3DHand[points] = getAveragePos(datas.datas);
+    }
+
+    // Filtrage position
+    updateAveragePos(pos_x, pos_y, pos_z);
+    gAvPos = getAveragePos(gPosArray);
+
+    // Stockage des angles dans le tableau
+    let angle = angle_joints(gJoints, filtered3DHand)[0];
+
+    // Vitesse angulaire
+    let elapsedTime = performance.now() - gTimeStart;
+    gTimeStart = performance.now();
+    gAngleSpeed = Math.abs(angle - gLastAngle) / elapsedTime * 1000;
+    gLastAngle = angle;
+
+    // console.log(gAngleSpeed.toFixed(2));
+    gIsDetect = true;
+  }else
+  {
+    gIsDetect = false;
+  }
+}
+
 function onResults(results) 
 {
   ctxCam.save();
   ctxCam.clearRect(0, 0, canvasCamera.width, canvasCamera.height);
-  //ctxCam.drawImage(
-  //    results.image, 0, 0, canvasCamera.width, canvasCamera.height);
+
+  // ctxCam.drawImage(results.image, 0, 0, canvasCamera.width, canvasCamera.height);
   if (results.multiHandLandmarks) {
     for (const landmarks of results.multiHandLandmarks) {
       drawConnectors(ctxCam, landmarks, HAND_CONNECTIONS,
@@ -107,66 +173,30 @@ function onResults(results)
   }
   ctxCam.restore(); 
   
-  // Mémorise en continue chaque nouvelle position
-  if(results.multiHandLandmarks[0]?.length === 21)
+
+  // Mesures des données de la main
+  processResults(results);
+
+  // Partie fonctionnelle
+  if(gIsDetect)
   {
-    const index_finger_pos = results.multiHandLandmarks[0][8];
-
-    let pos_x = (1.0 - index_finger_pos.x) * canvasPainting.width;
-    let pos_y = index_finger_pos.y * canvasPainting.height;
-    let pos_z = Math.abs(index_finger_pos.z) * canvasPainting.width * 0.2;
-  
-    if(gFirstDetect)
+    // Dessin
+    if(gLastAngle > 164)
     {
-      gAvPos = {'x': pos_x, 'y': pos_y, 'z': pos_z};
-      gPosArray.fill(gAvPos);
-      gFirstDetect = false;
-    }
-    
-    updateAveragePos(pos_x, pos_y, pos_z);
-    gAvPos = getAveragePos();
-
-    if(gFingerDown)
       processDrawing(gAvPos.x, gAvPos.y, gAvPos.z);
-
-    setCursor(pos_x - gAvPos.z, pos_y - gAvPos.z, gAvPos.z);
-  }
-
-  // Gestion du click en fonction de l'angle de l'index
-  if(results.multiHandWorldLandmarks[0]?.length === 21)
-  {
-    let angle = angle_joints(gJoints, results.multiHandWorldLandmarks[0])[0];
-
-    console.log(angle);
-
-    gAngleValues[gAngleIndex] = angle;
-    gAngleIndex = gAngleIndex < gAngleValues.length - 1 ? ++gAngleIndex : 0;
-
-    let mean, sum = 0;
-    gAngleValues.forEach((e) => sum += e);
-    mean = sum / gAngleValues.length;
-
-    console.log(mean);
-
-    if(mean < 160) // Threshold est de 160 degré
-    {
-      // Premier dépassement du seuil
-      if(!gFingerDown)
-      {
-        // Action click sur la page
-        let div = document.elementFromPoint(gAvPos.x, gAvPos.y);
-        div?.click();
-        console.log('Click !');
-
-        // Commence à dessiner à cette instant
-        reset_finger_draw();
-        
-        gFingerDown = true;
-      }
-      
     }else
     {
-      gFingerDown = false;
+      gLastPos = null;
+    }
+    setCursor(gAvPos.x - gAvPos.z, gAvPos.y - gAvPos.z, gAvPos.z);
+
+    // console.log('Angle vitesse:' + Math.round(gAngleSpeed) + ' Angle:' + gLastAngle);
+
+    if(gAngleSpeed > 50 && gLastAngle < 165)
+    {
+      let div = document.elementFromPoint(gAvPos.x, gAvPos.y);
+      div?.click();
+      console.log('Click !');
     }
   }
 }
@@ -174,7 +204,7 @@ function onResults(results)
 function processDrawing(pos_x, pos_y, pos_z)
 {
     // Drawing
-    if(gLastPos !== null)
+    if(gLastPos !=  null)
     {
       const eraserScale = 1.5;
       
@@ -247,14 +277,16 @@ function resizeCanvas()
   const canvasWidth = window.innerWidth;
   const canvasHeight = window.innerHeight;
 
-  ctxPainting.canvas.width = ctxCam.canvas.width = canvasWidth;
-  ctxPainting.canvas.height = ctxCam.canvas.height = canvasHeight;
+  ctxCam.canvas.width = canvasWidth;
+  ctxCam.canvas.height = canvasHeight;
+
+  ctxPainting.canvas.width = canvasWidth;
+  ctxPainting.canvas.height = canvasHeight;
 }
 
 function reset_finger_draw()
 {
   gLastPos = null;
-  gPosArray.fill({'x': 0, 'y': 0, 'z': 0});
   gMoyIndex = 0;
   gFirstDetect = true;
 }
