@@ -9,28 +9,25 @@ const cursor = document.getElementById('cursor');
 const ctxCam = canvasCamera.getContext('2d');
 const ctxPainting = canvasPainting.getContext('2d');
 
-let gFirstDetect = false;
+// Contrôle dessin
+let gTimeStart = 0;
+let gIsDetect = false;
 let gEraseMode = false;
 let gFingerDown = false;
 
-let gTrackPoints = [5, 6, 0];
-let gDatasPoints = {};
+// Filtrage
+let gTrack3DPoints = [5, 6, 0, 8];
+let gTrack2DPoints = [8];
+
+let gFiltered3DHand = {};
+let gFiltered2DHand = {};
 
 // Angle index
 let gLastAngle = 0;
 let gAngleSpeed = 0;
-
-// Lissage du dessin
-let gLastPos = {'x': 0, 'y': 0, 'z': 0};
-let gAvPos = {'x': 0, 'y': 0, 'z': 0};
-let gMoyIndex = 0;
-let gPosArray = Array(10);
-
 let gJoints = [[5, 6, 0]];
-let gTimeStart = 0;
 
-let gIsDetect = false;
-
+////////// [ FILTRAGE ] ///////////
 function updateAveragePos(x, y, z)
 {
   gPosArray[gMoyIndex] = {'x': x, 'y': y, 'z': z};
@@ -60,6 +57,35 @@ function getAveragePos(array)
   return {'x': x, 'y': y, 'z': z};
 }
 
+function initFilteredHand(filteredHand, tracked_points, length, landmarks)
+{
+  for(points of tracked_points)
+  {
+    const pos = landmarks[points];
+
+    filteredHand[points] = {'datas': null, 'index': 0,
+              'x': pos.x, 'y': pos.y, 'z': pos.z};
+
+    filteredHand[points].datas = Array.from({'length': length}, () => ({'x': pos.x, 'y': pos.y, 'z': pos.z}));
+  }
+}
+
+function filterHand(landmarks, filtered, tracked_points)
+{
+  for(points of tracked_points)
+  {
+    let datas = filtered[points];
+    const pos = landmarks[points];
+
+    Object.assign(datas.datas[datas.index], pos); 
+
+    datas.index = (datas.index + 1) % (datas.datas.length);
+  
+    const pt = getAveragePos(datas.datas);
+    Object.assign(datas, pt);
+  }
+}
+
 // https://www.geeksforgeeks.org/find-all-angles-of-a-triangle-in-3d/
 function angle_triangle(x1,x2,x3,y1,y2,y3,z1,z2,z3)
 {
@@ -80,6 +106,7 @@ function angle_triangle(x1,x2,x3,y1,y2,y3,z1,z2,z3)
     return angle ;
 }
 
+// Calcule l'angle entre trois points de la main
 function angle_joints(joints_list, landmarks)
 {
   let angles = [];
@@ -103,55 +130,32 @@ function processResults(results)
   // Acquisition des mesures
   if((results.multiHandLandmarks[0]?.length) === 21 && (results.multiHandWorldLandmarks[0]?.length === 21))
   {
-    let filtered3DHand = Object.assign({}, results.multiHandWorldLandmarks[0]);
-
-    const index_finger_pos = results.multiHandLandmarks[0][8];
-
-    let rect = canvasPainting.getBoundingClientRect();
-    
-    let pos_x = (1.0 - index_finger_pos.x) * canvasPainting.width - rect.x;
-    let pos_y = index_finger_pos.y * canvasPainting.height - rect.y;
-    let pos_z = Math.abs(index_finger_pos.z) * canvasPainting.width * 0.2;
-
-    if(gFirstDetect)
+   
+    if(!gIsDetect)
     {
-      gPosArray.fill({'x': pos_x, 'y': pos_y, 'z': pos_z});
-      gFirstDetect = false;
-    }
+      initFilteredHand(gFiltered2DHand, gTrack2DPoints, 10, results.multiHandLandmarks[0]);
+      initFilteredHand(gFiltered3DHand, gTrack3DPoints, 5, results.multiHandWorldLandmarks[0]);
 
-    // Stoque les positions des points tracké
-    for(points of gTrackPoints)
-    {
-      let datas = gDatasPoints[points];
-
-      if(datas == null)
-        datas = {'datas': Array(5).fill({'x':0, 'y':0, 'z': 0}), 'index': 0};
-
-      const pos = results.multiHandWorldLandmarks[0][points];
-
-      datas.datas[datas.index] = {'x': pos.x * 100, 'y': pos.y * 100, 'z': pos.z * 100};
-      datas.index = (datas.index + 1) % (datas.datas.length - 1);
+      gAngleSpeed = 0;
+      gTimeStart = performance.now();
       
-      gDatasPoints[points] = datas;
-    
-      filtered3DHand[points] = getAveragePos(datas.datas);
+      gIsDetect = true;
+    }else
+    {
+      filterHand(results.multiHandWorldLandmarks[0], gFiltered3DHand, gTrack3DPoints);
+      filterHand(results.multiHandLandmarks[0], gFiltered2DHand, gTrack2DPoints);
+      
+      // Stockage des angles dans le tableau
+      let angle = angle_joints(gJoints, gFiltered3DHand)[0];
+      console.log(angle);
+      
+      // Vitesse angulaire
+      let elapsedTime = performance.now() - gTimeStart;
+      gTimeStart = performance.now();
+      gAngleSpeed = Math.abs(angle - gLastAngle) / elapsedTime * 1000;
+      gLastAngle = angle;
     }
 
-    // Filtrage position
-    updateAveragePos(pos_x, pos_y, pos_z);
-    gAvPos = getAveragePos(gPosArray);
-
-    // Stockage des angles dans le tableau
-    let angle = angle_joints(gJoints, filtered3DHand)[0];
-
-    // Vitesse angulaire
-    let elapsedTime = performance.now() - gTimeStart;
-    gTimeStart = performance.now();
-    gAngleSpeed = Math.abs(angle - gLastAngle) / elapsedTime * 1000;
-    gLastAngle = angle;
-
-    // console.log(gAngleSpeed.toFixed(2));
-    gIsDetect = true;
   }else
   {
     gIsDetect = false;
@@ -180,6 +184,14 @@ function onResults(results)
   // Partie fonctionnelle
   if(gIsDetect)
   {
+    const gAvPos = gFiltered2DHand[8];
+
+    let rect = canvasPainting.getBoundingClientRect();
+    
+    gAvPos.x = (1 - gAvPos.x) * rect.width;
+    gAvPos.y *= rect.height;
+    gAvPos.z = Math.abs(gAvPos.z) * rect.width * 0.1;
+
     // Dessin
     if(gLastAngle > 164)
     {
@@ -188,7 +200,7 @@ function onResults(results)
     {
       gLastPos = null;
     }
-    setCursor(gAvPos.x - gAvPos.z, gAvPos.y - gAvPos.z, gAvPos.z);
+    setCursor(gAvPos.x - gAvPos.z / 2, gAvPos.y - gAvPos.z / 2, gAvPos.z);
 
     // console.log('Angle vitesse:' + Math.round(gAngleSpeed) + ' Angle:' + gLastAngle);
 
@@ -287,8 +299,7 @@ function resizeCanvas()
 function reset_finger_draw()
 {
   gLastPos = null;
-  gMoyIndex = 0;
-  gFirstDetect = true;
+  gIsDetect = false;
 }
 
 function setCursor(x, y, w)
