@@ -28,15 +28,6 @@ let gAngleSpeed = 0;
 let gJoints = [[5, 6, 0]];
 
 ////////// [ FILTRAGE ] ///////////
-function updateAveragePos(x, y, z)
-{
-  gPosArray[gMoyIndex] = {'x': x, 'y': y, 'z': z};
-  gMoyIndex = gMoyIndex + 1;
-  
-  if(gMoyIndex > gPosArray.length - 1)
-    gMoyIndex = 0;
-}
-
 function getAveragePos(array)
 {
   let sum_x = 0;
@@ -139,6 +130,8 @@ function processResults(results)
       gAngleSpeed = 0;
       gTimeStart = performance.now();
       
+      gLastPos = null;
+
       gIsDetect = true;
     }else
     {
@@ -159,6 +152,7 @@ function processResults(results)
   }else
   {
     gIsDetect = false;
+    cursor.style.display = 'none';
   }
 }
 
@@ -210,7 +204,11 @@ function onResults(results)
       div?.click();
       console.log('Click !');
     }
-  }
+    cursor.style.display = 'block';
+  }else
+  {
+  cursor.style.display = 'none';
+  }  
 }
 
 function processDrawing(pos_x, pos_y, pos_z)
