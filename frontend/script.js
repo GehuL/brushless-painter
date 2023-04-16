@@ -1,4 +1,3 @@
-
 const videoElement = document.getElementsByClassName('input_video')[0];
 
 const canvasCamera = document.getElementById('camera_canvas');
@@ -13,7 +12,6 @@ const ctxPainting = canvasPainting.getContext('2d');
 let gTimeStart = 0;
 let gIsDetect = false;
 let gEraseMode = false;
-let gFingerDown = false;
 
 // Filtrage
 let gTrack3DPoints = [5, 6, 0, 8];
