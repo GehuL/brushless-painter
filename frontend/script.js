@@ -200,8 +200,9 @@ function processDrawing(pos_x, pos_y, pos_z)
 }
 
 const hands = new Hands({locateFile: (file) => {
-  //return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
-  return `node_modules/@mediapipe/hands/${file}`;
+  // return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
+  // return `node_modules/@mediapipe/hands/${file}`;
+  return scriptPath.concat("hands/" + file);
 }});
 
 hands.setOptions({
