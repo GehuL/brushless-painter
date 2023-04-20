@@ -8,6 +8,9 @@ const cursor = document.getElementById('cursor');
 const ctxCam = canvasCamera.getContext('2d');
 const ctxPainting = canvasPainting.getContext('2d');
 
+let CDN_URL = 'https://cdn.jsdelivr.net/npm/@mediapipe'
+let LOCAL_MEDIAPIPE_PATH = 'static/node_modules/@mediapipe'
+
 // Contrôle dessin
 let gTimeStart = 0;
 let gIsDetect = false;
@@ -237,10 +240,22 @@ function processDrawing(pos_x, pos_y, pos_z)
     gLastPos = {'x': pos_x, 'y': pos_y, 'z': pos_z};
 }
 
-const hands = new Hands({locateFile: (file) => {
-  //return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
-  return `node_modules/@mediapipe/hands/${file}`;
-}});
+function UrlExists(url)
+{
+    var http = new XMLHttpRequest();
+    http.open('HEAD', url, false);
+    http.send();
+    return http.status!=404;
+}
+
+const hands = new Hands({locateFile: (file) => 
+  {
+    path = `${LOCAL_MEDIAPIPE_PATH}/hands/${file}`
+    if(UrlExists(path) == false)
+      path = `${CDN_URL}/hands/${file}`;
+    return path;
+  }
+});
 
 hands.setOptions({
   maxNumHands: 1,
