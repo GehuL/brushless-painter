@@ -8,8 +8,8 @@ const cursor = document.getElementById('cursor');
 const ctxCam = canvasCamera.getContext('2d');
 const ctxPainting = canvasPainting.getContext('2d');
 
-let CDN_URL = 'https://cdn.jsdelivr.net/npm/@mediapipe'
-let LOCAL_MEDIAPIPE_PATH = 'static/node_modules/@mediapipe'
+const CDN_URL = 'https://cdn.jsdelivr.net/npm/@mediapipe'
+const LOCAL_MEDIAPIPE_PATH = 'static/node_modules/@mediapipe'
 
 // Contrôle dessin
 let gTimeStart = 0;
@@ -17,8 +17,8 @@ let gIsDetect = false;
 let gEraseMode = false;
 
 // Filtrage
-let gTrack3DPoints = [5, 6, 0, 8];
-let gTrack2DPoints = [8];
+const gTrack3DPoints = [5, 6, 0, 8];
+const gTrack2DPoints = [8];
 
 let gFiltered3DHand = {};
 let gFiltered2DHand = {};
@@ -26,7 +26,11 @@ let gFiltered2DHand = {};
 // Angle index
 let gLastAngle = 0;
 let gAngleSpeed = 0;
-let gJoints = [[5, 6, 0]];
+const gJoints = [[5, 6, 0]];
+
+// Caméra
+let gIsCameraOpen = false;
+
 
 ////////// [ FILTRAGE ] ///////////
 function getAveragePos(array)
@@ -251,7 +255,7 @@ function UrlExists(url)
 const hands = new Hands({locateFile: (file) => 
   {
     path = `${LOCAL_MEDIAPIPE_PATH}/hands/${file}`
-    if(UrlExists(path) == false)
+    if(UrlExists(path) === false)
       path = `${CDN_URL}/hands/${file}`;
     return path;
   }
@@ -274,12 +278,10 @@ const camera = new Camera(videoElement, {
   height: 720
 });
 
-var isCameraActive = false;
-
 // Play stop camera 
 btnPlay.addEventListener('click', () => {
    
-    if(isCameraActive)
+    if(gIsCameraOpen)
     {
         camera.stop();
         btnPlay.textContent = 'PLAY';
@@ -291,7 +293,7 @@ btnPlay.addEventListener('click', () => {
     
         reset_finger_draw();
       }
-    isCameraActive = !isCameraActive;
+    gIsCameraOpen = !gIsCameraOpen;
 
 });
 

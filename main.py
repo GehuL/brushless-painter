@@ -12,10 +12,10 @@ LOCAL_MEDIAPIPE_PATH = 'static/node_modules/@mediapipe'
 
 mediapipe_path = LOCAL_MEDIAPIPE_PATH
 
+# Retourne Vrai si les packages npm de mediapipe sont installés
 def check_mediapipe():
 
     output = os.popen('cd static ; npm list -p').read().split('\n')
-    app.logger.debug(output)
     for filename in MEDIAPIPE_FILES:
         
         present = False
@@ -34,10 +34,8 @@ def homepage():
 
 if check_mediapipe():
     mediapipe_path = LOCAL_MEDIAPIPE_PATH
-    app.logger.debug('true')
 else:
     mediapipe_path = CDN_URL
-    app.logger.debug('false')
 
 if __name__ == '__main__':
     app.run(debug=True)
