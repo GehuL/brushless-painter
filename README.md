@@ -33,12 +33,18 @@ cd chemin_de_destination/
 git clone https://github.com/GehuL/brushless-painter.git
 ```
 
-## Avec CDN (simple)
+## Script externe
 
-La version avec CDN (content delivery network) charge les scripts de médiapipe et tout le nécessaire depuis leurs serveurs.
-Il est donc nécessaire d'avoir une connexion internet pour faire fonctionner la détection de main.
+Les scripts nécessaires à la détection de la main sont chargés par le script "loader.js".
+Par défaut, il charge les scripts depuis votre serveur selon ce chemin:
+/node_modules/@mediapipe/
+S'il ne les trouve pas, l'url est la suivante:
+https://cdn.jsdelievr.net/npm/@mediapipe/
 
-## Sans CDN
+Il faut donc une connexion internet pour charger la page sur votre navigateur.
+Il est conseillé de télécharger les scripts externes, qui permettra de réduire le temps de chargement et d'être indépendant des serveurs cdn.
+
+## Télécharger les scripts externes
 
 Pour installer les modules de Mediapipe sur votre machine, il faut installer l'utilitaire de package javascript [nmp](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm).
 
