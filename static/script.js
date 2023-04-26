@@ -2,11 +2,15 @@ const videoElement = document.getElementsByClassName('input_video')[0];
 
 const canvasCamera = document.getElementById('camera_canvas');
 const canvasPainting = document.getElementById('painting_canvas');
-const btnPlay = document.getElementById('btnPlay');
+const canvasPreview = document.getElementById('preview_canvas');
+
+const btnPlay = document.getElementById('btn_play');
+const btnPreview = document.getElementById('btn_preview');
 const cursor = document.getElementById('cursor');
 
 const ctxCam = canvasCamera.getContext('2d');
 const ctxPainting = canvasPainting.getContext('2d');
+const ctxPreview = canvasPreview.getContext('2d');
 
 const CDN_URL = 'https://cdn.jsdelivr.net/npm/@mediapipe'
 const LOCAL_MEDIAPIPE_PATH = 'static/node_modules/@mediapipe'
@@ -30,7 +34,7 @@ const gJoints = [[5, 6, 0]];
 
 // Caméra
 let gIsCameraOpen = false;
-
+let gShowPreview = false;
 
 ////////// [ FILTRAGE ] ///////////
 function getAveragePos(array)
@@ -166,7 +170,9 @@ function onResults(results)
   ctxCam.save();
   ctxCam.clearRect(0, 0, canvasCamera.width, canvasCamera.height);
 
-  // ctxCam.drawImage(results.image, 0, 0, canvasCamera.width, canvasCamera.height);
+  if(gShowPreview)
+    ctxPreview.drawImage(results.image, 0, 0, canvasCamera.width, canvasCamera.height);
+  
   if (results.multiHandLandmarks) {
     for (const landmarks of results.multiHandLandmarks) {
       drawConnectors(ctxCam, landmarks, HAND_CONNECTIONS,
@@ -175,7 +181,6 @@ function onResults(results)
     }
   }
   ctxCam.restore(); 
-  
 
   // Mesures des données de la main
   processResults(results);
@@ -278,25 +283,6 @@ const camera = new Camera(videoElement, {
   height: 720
 });
 
-// Play stop camera 
-btnPlay.addEventListener('click', () => {
-   
-    if(gIsCameraOpen)
-    {
-        camera.stop();
-        btnPlay.textContent = 'PLAY';
-    }else{
-        camera.start();
-        btnPlay.textContent = 'STOP';
-    
-        ctxPainting.clearRect(0, 0 , canvasPainting.width, canvasPainting.height);
-    
-        reset_finger_draw();
-      }
-    gIsCameraOpen = !gIsCameraOpen;
-
-});
-
 function resizeCanvas()
 {
   const canvasWidth = window.innerWidth;
@@ -307,6 +293,9 @@ function resizeCanvas()
 
   ctxPainting.canvas.width = canvasWidth;
   ctxPainting.canvas.height = canvasHeight;
+
+  ctxPreview.canvas.width = canvasWidth;
+  ctxPreview.canvas.height = canvasHeight;
 }
 
 function reset_finger_draw()
@@ -327,11 +316,47 @@ window.addEventListener('resize', resizeCanvas);
 window.addEventListener('mousedown', (event) => {
   reset_finger_draw();
 });
+
 window.addEventListener('mousemove', (event) => {
   if(event?.buttons === 1){
     processDrawing(event?.x, event?.y, 10);
     setCursor(event?.x - 10, event?.y - 10, 10);
   }
+});
+
+btnPreview.addEventListener('click', (event)=>
+{
+  const btn = document.getElementById('btn_preview');
+
+  if(gShowPreview)
+  {
+    gShowPreview = false;
+    ctxPreview.clearRect(0, 0, canvasPreview.width, canvasPreview.height);
+    btn.style.backgroundImage = 'url(static/assets/eye.png)';
+  }else
+  {
+    gShowPreview = true;
+    btn.style.backgroundImage = 'url(static/assets/crossed_eye.png)';
+  }
+});
+
+// Play stop camera 
+btnPlay.addEventListener('click', () => {
+   
+  if(gIsCameraOpen)
+  {
+      camera.stop();
+      btnPlay.textContent = 'PLAY';
+  }else{
+      camera.start();
+      btnPlay.textContent = 'STOP';
+  
+      ctxPainting.clearRect(0, 0 , canvasPainting.width, canvasPainting.height);
+  
+      reset_finger_draw();
+    }
+  gIsCameraOpen = !gIsCameraOpen;
+
 });
 
 reset_finger_draw();
