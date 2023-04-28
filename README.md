@@ -64,7 +64,7 @@ flask --app main run --debug
 ```
 Vérifierz sur quel port le serveur démarre (par défaut 5000).
 Vous pouvez accéder au site à partir de l'adresse suivante:
-http://localhost:<port>
+http://localhost:!<port>
 
 # Compatibilité
 
