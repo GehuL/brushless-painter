@@ -57,6 +57,11 @@ function getAveragePos(array)
   return {'x': x, 'y': y, 'z': z};
 }
 
+// Alloue la mémoire pour le filtrage d'une main et initialise les positions
+// filteredHand: Structure de donnée pour calculer la moyenne glissante
+// tracked_points: Liste des numéros des phalanges à traiter
+// length: Nombre de position à mémoriser pour la moyenne
+// landmarks: Positions des phalanges issus du résultat de la détection de main
 function initFilteredHand(filteredHand, tracked_points, length, landmarks)
 {
   for(points of tracked_points)
@@ -70,6 +75,9 @@ function initFilteredHand(filteredHand, tracked_points, length, landmarks)
   }
 }
 
+// landmarks: Positions des phalanges issus du résultat de la détection de main
+// filtered: Structure de donnée pour calculer la moyenne glissante
+// tracked_points: Liste des numéros des phalanges à traiter 
 function filterHand(landmarks, filtered, tracked_points)
 {
   for(points of tracked_points)
@@ -149,7 +157,6 @@ function processResults(results)
       
       // Stockage des angles dans le tableau
       let angle = angle_joints(gJoints, gFiltered3DHand)[0];
-      console.log(angle);
       
       // Vitesse angulaire
       let elapsedTime = performance.now() - gTimeStart;
@@ -190,14 +197,14 @@ function onResults(results)
   {
     const gAvPos = gFiltered2DHand[8];
 
+    // Dimensions de l'écran
     let rect = canvasPainting.getBoundingClientRect();
-    
     gAvPos.x = (1 - gAvPos.x) * rect.width;
     gAvPos.y *= rect.height;
     gAvPos.z = Math.abs(gAvPos.z) * rect.width * 0.1;
 
     // Dessin
-    if(gLastAngle > 164)
+    if(gLastAngle > 162)
     {
       processDrawing(gAvPos.x, gAvPos.y, gAvPos.z);
     }else
@@ -206,8 +213,7 @@ function onResults(results)
     }
     setCursor(gAvPos.x - gAvPos.z / 2, gAvPos.y - gAvPos.z / 2, gAvPos.z);
 
-    // console.log('Angle vitesse:' + Math.round(gAngleSpeed) + ' Angle:' + gLastAngle);
-
+    // Click doigt
     if(gAngleSpeed > 50 && gLastAngle < 165)
     {
       let div = document.elementFromPoint(gAvPos.x, gAvPos.y);
@@ -272,6 +278,7 @@ hands.setOptions({
   minDetectionConfidence: 0.5,
   minTrackingConfidence: 0.5
 });
+
 hands.onResults(onResults);
 
 const camera = new Camera(videoElement, {
