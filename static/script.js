@@ -2,14 +2,18 @@ const videoElement = document.getElementsByClassName('input_video')[0];
 
 const canvasCamera = document.getElementById('camera_canvas');
 const canvasPainting = document.getElementById('painting_canvas');
-const btnPlay = document.getElementById('btnPlay');
+const canvasPreview = document.getElementById('preview_canvas');
+
+const btnPlay = document.getElementById('btn_play');
+const btnPreview = document.getElementById('btn_preview');
 const cursor = document.getElementById('cursor');
 
 const ctxCam = canvasCamera.getContext('2d');
 const ctxPainting = canvasPainting.getContext('2d');
+const ctxPreview = canvasPreview.getContext('2d');
 
-let CDN_URL = 'https://cdn.jsdelivr.net/npm/@mediapipe'
-let LOCAL_MEDIAPIPE_PATH = 'static/node_modules/@mediapipe'
+const CDN_URL = 'https://cdn.jsdelivr.net/npm/@mediapipe'
+const LOCAL_MEDIAPIPE_PATH = 'static/node_modules/@mediapipe'
 
 // Contrôle dessin
 let gTimeStart = 0;
@@ -17,8 +21,8 @@ let gIsDetect = false;
 let gEraseMode = false;
 
 // Filtrage
-let gTrack3DPoints = [5, 6, 0, 8];
-let gTrack2DPoints = [8];
+const gTrack3DPoints = [5, 6, 0, 8];
+const gTrack2DPoints = [8];
 
 let gFiltered3DHand = {};
 let gFiltered2DHand = {};
@@ -26,7 +30,11 @@ let gFiltered2DHand = {};
 // Angle index
 let gLastAngle = 0;
 let gAngleSpeed = 0;
-let gJoints = [[5, 6, 0]];
+const gJoints = [[5, 6, 0]];
+
+// Caméra
+let gIsCameraOpen = false;
+let gShowPreview = false;
 
 ////////// [ FILTRAGE ] ///////////
 function getAveragePos(array)
@@ -49,6 +57,11 @@ function getAveragePos(array)
   return {'x': x, 'y': y, 'z': z};
 }
 
+// Alloue la mémoire pour le filtrage d'une main et initialise les positions
+// filteredHand: Structure de donnée pour calculer la moyenne glissante
+// tracked_points: Liste des numéros des phalanges à traiter
+// length: Nombre de position à mémoriser pour la moyenne
+// landmarks: Positions des phalanges issus du résultat de la détection de main
 function initFilteredHand(filteredHand, tracked_points, length, landmarks)
 {
   for(points of tracked_points)
@@ -62,6 +75,9 @@ function initFilteredHand(filteredHand, tracked_points, length, landmarks)
   }
 }
 
+// landmarks: Positions des phalanges issus du résultat de la détection de main
+// filtered: Structure de donnée pour calculer la moyenne glissante
+// tracked_points: Liste des numéros des phalanges à traiter 
 function filterHand(landmarks, filtered, tracked_points)
 {
   for(points of tracked_points)
@@ -141,7 +157,6 @@ function processResults(results)
       
       // Stockage des angles dans le tableau
       let angle = angle_joints(gJoints, gFiltered3DHand)[0];
-      console.log(angle);
       
       // Vitesse angulaire
       let elapsedTime = performance.now() - gTimeStart;
@@ -162,7 +177,9 @@ function onResults(results)
   ctxCam.save();
   ctxCam.clearRect(0, 0, canvasCamera.width, canvasCamera.height);
 
-  // ctxCam.drawImage(results.image, 0, 0, canvasCamera.width, canvasCamera.height);
+  if(gShowPreview)
+    ctxPreview.drawImage(results.image, 0, 0, canvasCamera.width, canvasCamera.height);
+  
   if (results.multiHandLandmarks) {
     for (const landmarks of results.multiHandLandmarks) {
       drawConnectors(ctxCam, landmarks, HAND_CONNECTIONS,
@@ -171,7 +188,6 @@ function onResults(results)
     }
   }
   ctxCam.restore(); 
-  
 
   // Mesures des données de la main
   processResults(results);
@@ -181,14 +197,14 @@ function onResults(results)
   {
     const gAvPos = gFiltered2DHand[8];
 
+    // Dimensions de l'écran
     let rect = canvasPainting.getBoundingClientRect();
-    
     gAvPos.x = (1 - gAvPos.x) * rect.width;
     gAvPos.y *= rect.height;
     gAvPos.z = Math.abs(gAvPos.z) * rect.width * 0.1;
 
     // Dessin
-    if(gLastAngle > 164)
+    if(gLastAngle > 162)
     {
       processDrawing(gAvPos.x, gAvPos.y, gAvPos.z);
     }else
@@ -197,8 +213,7 @@ function onResults(results)
     }
     setCursor(gAvPos.x - gAvPos.z / 2, gAvPos.y - gAvPos.z / 2, gAvPos.z);
 
-    // console.log('Angle vitesse:' + Math.round(gAngleSpeed) + ' Angle:' + gLastAngle);
-
+    // Click doigt
     if(gAngleSpeed > 50 && gLastAngle < 165)
     {
       let div = document.elementFromPoint(gAvPos.x, gAvPos.y);
@@ -251,7 +266,7 @@ function UrlExists(url)
 const hands = new Hands({locateFile: (file) => 
   {
     path = `${LOCAL_MEDIAPIPE_PATH}/hands/${file}`
-    if(UrlExists(path) == false)
+    if(UrlExists(path) === false)
       path = `${CDN_URL}/hands/${file}`;
     return path;
   }
@@ -263,6 +278,7 @@ hands.setOptions({
   minDetectionConfidence: 0.5,
   minTrackingConfidence: 0.5
 });
+
 hands.onResults(onResults);
 
 const camera = new Camera(videoElement, {
@@ -272,27 +288,6 @@ const camera = new Camera(videoElement, {
   facingMode: 'user',
   width: 1280,
   height: 720
-});
-
-var isCameraActive = false;
-
-// Play stop camera 
-btnPlay.addEventListener('click', () => {
-   
-    if(isCameraActive)
-    {
-        camera.stop();
-        btnPlay.textContent = 'PLAY';
-    }else{
-        camera.start();
-        btnPlay.textContent = 'STOP';
-    
-        ctxPainting.clearRect(0, 0 , canvasPainting.width, canvasPainting.height);
-    
-        reset_finger_draw();
-      }
-    isCameraActive = !isCameraActive;
-
 });
 
 function resizeCanvas()
@@ -305,6 +300,9 @@ function resizeCanvas()
 
   ctxPainting.canvas.width = canvasWidth;
   ctxPainting.canvas.height = canvasHeight;
+
+  ctxPreview.canvas.width = canvasWidth;
+  ctxPreview.canvas.height = canvasHeight;
 }
 
 function reset_finger_draw()
@@ -325,11 +323,47 @@ window.addEventListener('resize', resizeCanvas);
 window.addEventListener('mousedown', (event) => {
   reset_finger_draw();
 });
+
 window.addEventListener('mousemove', (event) => {
   if(event?.buttons === 1){
     processDrawing(event?.x, event?.y, 10);
     setCursor(event?.x - 10, event?.y - 10, 10);
   }
+});
+
+btnPreview.addEventListener('click', (event)=>
+{
+  const btn = document.getElementById('btn_preview');
+
+  if(gShowPreview)
+  {
+    gShowPreview = false;
+    ctxPreview.clearRect(0, 0, canvasPreview.width, canvasPreview.height);
+    btn.style.backgroundImage = 'url(static/assets/eye.png)';
+  }else
+  {
+    gShowPreview = true;
+    btn.style.backgroundImage = 'url(static/assets/crossed_eye.png)';
+  }
+});
+
+// Play stop camera 
+btnPlay.addEventListener('click', () => {
+   
+  if(gIsCameraOpen)
+  {
+      camera.stop();
+      btnPlay.textContent = 'PLAY';
+  }else{
+      camera.start();
+      btnPlay.textContent = 'STOP';
+  
+      ctxPainting.clearRect(0, 0 , canvasPainting.width, canvasPainting.height);
+  
+      reset_finger_draw();
+    }
+  gIsCameraOpen = !gIsCameraOpen;
+
 });
 
 reset_finger_draw();

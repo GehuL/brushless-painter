@@ -33,45 +33,38 @@ cd chemin_de_destination/
 git clone https://github.com/GehuL/brushless-painter.git
 ```
 
-## Script externe
+## Packages mediapipe
 
-Les scripts nécessaires à la détection de la main sont chargés par le script "loader.js".
-Par défaut, il charge les scripts depuis votre serveur selon ce chemin:
-/node_modules/@mediapipe/
-S'il ne les trouve pas, l'url est la suivante:
-https://cdn.jsdelievr.net/npm/@mediapipe/
-
-Il faut donc une connexion internet pour charger la page sur votre navigateur.
-Il est conseillé de télécharger les scripts externes, qui permettra de réduire le temps de chargement et d'être indépendant des serveurs cdn.
-
-## Télécharger les scripts externes
+Installer les packages mediapipe n'est pas nécessaire mais il permet de réduire le temps de chargement de la page web et de travailler sans internet.
+S'ils ne sont pas installés, les scripts mediapipe proviennent d'un CDN (serveur externe).
 
 Pour installer les modules de Mediapipe sur votre machine, il faut installer l'utilitaire de package javascript [nmp](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm).
 
 Une fois npm installé, déplacez-vous à la racine du projet et tapez:
 ```
-cd frontend/
-npm i @mediapipe/camera_utils
-npm i @mediapipe/drawing_utils
-npm i @mediapipe/control_utils
-npm i @mediapipe/hands
+cd static/
+npm i @mediapipe/camera_utils@0.3
+npm i @mediapipe/drawing_utils@0.3
+npm i @mediapipe/control_utils@0.6
+npm i @mediapipe/hands@0.4
 ```
 
 ## Executer
 
-Pour pouvoir exécuter le programme dans le navigateur, il est impératif de lancer un serveur car des erreurs qui bloquent le chargement de script peuvent apparaître.
+Pour pouvoir afficher la page web dans un navigateur, il faut démarrer un serveur.
 
 Tout d'abord, installez la version 3 de [python](https://www.python.org/downloads/).
 Ensuite, tapez les commandes suivantes:
 ```
-cd frontend/
-python3 -m http.server 8765
+python3 -m pip install Flask
 ```
-
-Un serveur en local démarre, vous pouvez ensuite tapez dans la barre de recherche de votre navigateur:
-http://localhost:8765/homepage.html
-
-La valeur 8765 étant le port du serveur, vous pouvez la changer si ce port est déjà occupé.
+puis positionnez-vous à la racine du projet où se situe le fichier main.py.
+```
+flask --app main run --debug
+```
+Vérifierz sur quel port le serveur démarre (par défaut 5000).
+Vous pouvez accéder au site à partir de l'adresse suivante:
+http://localhost:<port>
 
 # Compatibilité
 

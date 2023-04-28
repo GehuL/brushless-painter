@@ -18,6 +18,7 @@
 
     <!-- Canvas (retour caméra, buffer, interface) -->
     <video class="input_video" hidden="true"></video>
+    <canvas class="canvas_style" id="preview_canvas"></canvas>
     <canvas class="canvas_style" id="painting_canvas"></canvas>
     
     <!-- Interface de selection des couleurs -->
@@ -38,7 +39,8 @@
     <div class="cursor" id="cursor"></div>
     <img src="/static/assets/ub_logo.png" id="logo">
 
-    <button class="button" id="btnPlay">PLAY</button>
+    <button class="button" id="btn_play">PLAY</button>
+    <button class="button" id="btn_preview"></button>
 
 </body>
 
